@@ -7,6 +7,14 @@ class Program
 {
     static async Task Main(string[] args)
     {
+        Console.WriteLine("███████████████████");
+        Console.WriteLine("█Simple Downloader█");
+        Console.WriteLine("█By niceEli       █");
+        Console.WriteLine("█                 █");
+        Console.WriteLine("█V1.0.X           █");
+        Console.WriteLine("███████████████████");
+        Console.WriteLine();
+
         if (args.Length < 1)
         {
             Console.WriteLine("Usage: Simple-Downloader <url> [<directory>]");
