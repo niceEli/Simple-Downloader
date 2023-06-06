@@ -17,8 +17,6 @@ class Program
 
         List<Task> downloadTasks = new List<Task>();
         bool extractFiles = false;
-
-        string currentUrl = "";
         string currentLocation = "";
 
         for (int i = 0; i < args.Length; i++)
@@ -33,53 +31,29 @@ class Program
 
             if (arg == "-L" && i + 1 < args.Length)
             {
-                if (!string.IsNullOrEmpty(currentUrl))
-                {
-                    downloadTasks.Add(DownloadFileAsync(currentUrl, currentLocation));
-
-                    if (extractFiles && IsZipFile(currentUrl))
-                    {
-                        string zipFilePath = GetZipFilePath(currentUrl, currentLocation);
-                        downloadTasks.Add(ExtractZipFileAsync(zipFilePath));
-                    }
-                }
-
                 currentLocation = args[i + 1];
-                i++;
                 continue;
             }
 
             if (IsUrl(arg))
             {
-                if (!string.IsNullOrEmpty(currentUrl))
-                {
-                    downloadTasks.Add(DownloadFileAsync(currentUrl, currentLocation));
+                string currentUrl = arg;
+                string currentDownloadLocation = string.IsNullOrEmpty(currentLocation) ? Environment.CurrentDirectory : currentLocation;
 
-                    if (extractFiles && IsZipFile(currentUrl))
-                    {
-                        string zipFilePath = GetZipFilePath(currentUrl, currentLocation);
-                        downloadTasks.Add(ExtractZipFileAsync(zipFilePath));
-                    }
+                downloadTasks.Add(DownloadFileAsync(currentUrl, currentDownloadLocation));
+
+                if (extractFiles && IsZipFile(currentUrl))
+                {
+                    string zipFilePath = GetZipFilePath(currentUrl, currentDownloadLocation);
+                    downloadTasks.Add(ExtractZipFileAsync(zipFilePath));
                 }
 
-                currentUrl = arg;
                 currentLocation = "";
             }
             else
             {
-                Console.WriteLine("Invalid command line arguments. URLs and locations must be specified alternately.");
+                Console.WriteLine($"Invalid argument: {arg}");
                 return;
-            }
-        }
-
-        if (!string.IsNullOrEmpty(currentUrl))
-        {
-            downloadTasks.Add(DownloadFileAsync(currentUrl, currentLocation));
-
-            if (extractFiles && IsZipFile(currentUrl))
-            {
-                string zipFilePath = GetZipFilePath(currentUrl, currentLocation);
-                downloadTasks.Add(ExtractZipFileAsync(zipFilePath));
             }
         }
 
@@ -100,9 +74,7 @@ class Program
     {
         Uri uri = new Uri(url);
         string fileName = Path.GetFileName(uri.LocalPath);
-        string filePath = string.IsNullOrEmpty(destination)
-            ? Path.Combine(Environment.CurrentDirectory, fileName)
-            : Path.Combine(destination, fileName);
+        string filePath = Path.Combine(destination, fileName);
 
         return filePath;
     }
@@ -113,9 +85,7 @@ class Program
         {
             Uri uri = new Uri(url);
             string fileName = Path.GetFileName(uri.LocalPath);
-            string filePath = string.IsNullOrEmpty(destination)
-                ? Path.Combine(Environment.CurrentDirectory, fileName)
-                : Path.Combine(destination, fileName);
+            string filePath = Path.Combine(destination, fileName);
 
             using (var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead))
             {
@@ -145,33 +115,18 @@ class Program
         }
     }
 
-
     static async Task ExtractZipFileAsync(string filePath)
     {
         string extractPath = Path.GetDirectoryName(filePath);
-        string zipFileName = Path.GetFileName(filePath);
 
-        Console.WriteLine($"Extracting: {zipFileName}");
-
-        await Task.Run(() => ZipFile.ExtractToDirectory(filePath, extractPath));
+        await Task.Run(() =>
+        {
+            ZipFile.ExtractToDirectory(filePath, extractPath);
+        });
 
         File.Delete(filePath);
-
-        Console.WriteLine($"Zip file extracted and deleted: {filePath}");
+        Console.WriteLine($"Zip file extracted to: {extractPath}");
     }
-
-    static void CopyFile(string sourcePath, string destinationDir)
-    {
-        string fileName = Path.GetFileName(sourcePath);
-        string destinationPath = string.IsNullOrEmpty(destinationDir)
-            ? Path.Combine(Environment.CurrentDirectory, fileName)
-            : Path.Combine(destinationDir, fileName);
-
-        File.Copy(sourcePath, destinationPath, true);
-
-        Console.WriteLine($"File copied to: {destinationPath}");
-    }
-
 
     static int CalculateProgressPercentage(long receivedBytes, long totalBytes)
     {
@@ -183,5 +138,4 @@ class Program
 
         return 0;
     }
-
 }
