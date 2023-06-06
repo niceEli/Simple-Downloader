@@ -109,21 +109,21 @@ class Program
 
     static void DrawProgressBar(long completed, long total)
     {
-        const int ProgressBarWidth = 40;
+        const int ProgressBarWidth = 10;
         const string ProgressBarChars = "░▒▓█";
 
         double progress = (double)completed / total;
         int completedWidth = (int)(progress * ProgressBarWidth);
-        int remainingWidth = ProgressBarWidth - completedWidth;
 
         int numFullChars = completedWidth / (ProgressBarWidth / ProgressBarChars.Length);
-        int numPartialChar = completedWidth % (ProgressBarWidth / ProgressBarChars.Length);
+        int numPartialChars = completedWidth % (ProgressBarWidth / ProgressBarChars.Length);
 
         string progressBar = new string(ProgressBarChars[ProgressBarChars.Length - 1], numFullChars);
-        if (numPartialChar > 0)
-            progressBar += ProgressBarChars[numPartialChar - 1];
 
-        progressBar += new string(ProgressBarChars[0], remainingWidth);
+        if (numPartialChars > 0)
+            progressBar += ProgressBarChars[numPartialChars - 1];
+
+        progressBar = progressBar.PadRight(ProgressBarWidth, ProgressBarChars[0]);
 
         Console.Write($" {progressBar}");
     }
