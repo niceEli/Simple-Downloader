@@ -35,13 +35,6 @@ jobs:
           dotnet build
 
       - name: Publish release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v1.0.${{ github.run_number }}
-          release_name: Release v1.0.${{ github.run_number }}
-          draft: false
-          prerelease: false
-          body: |
-            ./bin/Simple-Downloader.exe
+        run:  
+          # Realease Bruh
+          gh release create v1.0.${{ github.run_number }} ./bin/Simple-Downloader.exe
