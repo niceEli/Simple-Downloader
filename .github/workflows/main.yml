@@ -15,7 +15,7 @@ jobs:
       - name: Install .NET Framework
         run: |
           # Download .NET Framework installer
-          Invoke-WebRequest -Uri https://go.microsoft.com/fwlink/?linkid=2203306 -OutFile dotnet-framework-installer.exe
+          Invoke-WebRequest -Uri https://go.microsoft.com/fwlink/?linkid=2088517 -OutFile dotnet-framework-installer.exe
 
           # Install .NET Framework
           Start-Process -Wait -FilePath dotnet-framework-installer.exe -ArgumentList "/q"
