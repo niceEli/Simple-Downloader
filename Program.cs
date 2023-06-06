@@ -155,7 +155,7 @@ class Program
 
         Console.WriteLine($"Extracting: {zipFileName}");
 
-        await Task.Run(() => System.IO.Compression.FileSystem.ZipFile.ExtractToDirectory(filePath, extractPath));
+        await Task.Run(() => System.IO.Compression.ZipFile.ExtractToDirectory(filePath, extractPath));
 
         File.Delete(filePath);
 
