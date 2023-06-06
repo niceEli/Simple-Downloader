@@ -17,7 +17,12 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Install .NET Framework Developer Pack
-      run: sudo apt-get install -y dotnet-sdk-4.8
+      run: |
+        wget -O dotnet-sdk-installer.sh https://dot.net/v1/dotnet-install.sh
+        chmod +x dotnet-sdk-installer.sh
+        ./dotnet-sdk-installer.sh --install-dir /usr/share/dotnet --channel 3.1 --runtime dotnet --version 3.1.426
+        export DOTNET_ROOT="/usr/share/dotnet"
+        export PATH="$PATH:/usr/share/dotnet"
 
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
