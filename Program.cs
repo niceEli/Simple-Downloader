@@ -15,49 +15,50 @@ class Program
             return;
         }
 
-        List<Task> downloadTasks = new List<Task>();
+        List<(string url, string location)> downloads = new List<(string url, string location)>();
         bool extractFiles = false;
-        string currentLocation = "";
 
-        for (int i = 0; i < args.Length; i++)
+        string currentLocation = null;
+
+        foreach (var arg in args)
         {
-            string arg = args[i];
-
             if (arg == "-E" || arg == "--Extract")
             {
                 extractFiles = true;
                 continue;
             }
 
-            if (arg == "-L" && i + 1 < args.Length)
+            if (arg == "-L" || arg == "--Location")
             {
-                currentLocation = args[i + 1];
+                currentLocation = null;
                 continue;
             }
 
-            if (IsUrl(arg))
+            if (currentLocation == null)
             {
-                string currentUrl = arg;
-                string currentDownloadLocation = string.IsNullOrEmpty(currentLocation) ? Environment.CurrentDirectory : currentLocation;
-
-                downloadTasks.Add(DownloadFileAsync(currentUrl, currentDownloadLocation));
-
-                if (extractFiles && IsZipFile(currentUrl))
-                {
-                    string zipFilePath = GetZipFilePath(currentUrl, currentDownloadLocation);
-                    downloadTasks.Add(ExtractZipFileAsync(zipFilePath));
-                }
-
-                currentLocation = "";
+                currentLocation = arg;
             }
             else
             {
-                Console.WriteLine($"Invalid argument: {arg}");
-                return;
+                downloads.Add((arg, currentLocation));
+                currentLocation = null;
             }
         }
 
-        await Task.WhenAll(downloadTasks);
+        List<Task> tasks = new List<Task>();
+
+        foreach (var (url, location) in downloads)
+        {
+            tasks.Add(DownloadFileAsync(url, location));
+
+            if (extractFiles && IsZipFile(url))
+            {
+                string zipFilePath = Path.Combine(location, Path.GetFileName(url));
+                tasks.Add(ExtractZipFileAsync(zipFilePath));
+            }
+        }
+
+        await Task.WhenAll(tasks);
     }
 
     static bool IsUrl(string path)
@@ -68,15 +69,6 @@ class Program
     static bool IsZipFile(string url)
     {
         return Path.GetExtension(url).Equals(".zip", StringComparison.OrdinalIgnoreCase);
-    }
-
-    static string GetZipFilePath(string url, string destination)
-    {
-        Uri uri = new Uri(url);
-        string fileName = Path.GetFileName(uri.LocalPath);
-        string filePath = Path.Combine(destination, fileName);
-
-        return filePath;
     }
 
     static async Task DownloadFileAsync(string url, string destination)
