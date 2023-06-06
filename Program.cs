@@ -2,6 +2,9 @@ using System;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
+using MonoTorrent;
+using MonoTorrent.BEncoding;
+using MonoTorrent.Client;
 
 class Program
 {
@@ -20,7 +23,14 @@ class Program
         {
             if (IsUrl(source))
             {
-                await DownloadFileAsync(source, destination);
+                if (IsTorrent(source))
+                {
+                    await DownloadTorrentAsync(source, destination);
+                }
+                else
+                {
+                    await DownloadFileAsync(source, destination);
+                }
             }
             else
             {
@@ -42,6 +52,67 @@ class Program
     static bool IsUrl(string path)
     {
         return Uri.TryCreate(path, UriKind.Absolute, out _);
+    }
+
+    static bool IsTorrent(string path)
+    {
+        string extension = Path.GetExtension(path);
+        return extension.Equals(".torrent", StringComparison.OrdinalIgnoreCase);
+    }
+
+    static async Task DownloadTorrentAsync(string url, string destination)
+    {
+        string fileName = Path.GetFileName(url);
+        string filePath = string.IsNullOrEmpty(destination)
+            ? Path.Combine(Environment.CurrentDirectory, fileName)
+            : Path.Combine(destination, fileName);
+
+        using (HttpClient client = new HttpClient())
+        {
+            using (var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead))
+            {
+                response.EnsureSuccessStatusCode();
+
+                using (var stream = await response.Content.ReadAsStreamAsync())
+                using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                {
+                    await stream.CopyToAsync(fileStream);
+                }
+            }
+        }
+
+        Console.WriteLine($"Torrent file downloaded and saved to: {filePath}");
+        await ProcessTorrentFile(filePath, destination);
+    }
+
+    static async Task ProcessTorrentFile(string filePath, string destination)
+    {
+        Torrent torrent = Torrent.Load(filePath);
+        string torrentPath = Path.Combine(destination, torrent.Name);
+
+        using (var engine = new ClientEngine())
+        using (var torrentManager = new TorrentManager(torrent, torrentPath, new TorrentSettings()))
+        {
+            engine.Register(torrentManager);
+            torrentManager.Start();
+
+            while (torrentManager.State != TorrentState.Seeding)
+            {
+                Console.SetCursorPosition(0, Console.CursorTop);
+                Console.Write($"Downloading: {CalculateProgressPercentage(torrentManager)}%");
+
+                await Task.Delay(1000);
+            }
+
+            Console.WriteLine();
+            Console.WriteLine($"Torrent download completed. Files saved to: {torrentPath}");
+        }
+    }
+
+    static int CalculateProgressPercentage(TorrentManager torrentManager)
+    {
+        double progress = (double)torrentManager.Progress * 100;
+        return (int)progress;
     }
 
     static async Task DownloadFileAsync(string url, string destination)
@@ -72,7 +143,7 @@ class Program
                         await fileStream.WriteAsync(buffer, 0, bytesRead);
                         downloadedBytes += bytesRead;
                         Console.SetCursorPosition(0, Console.CursorTop);
-                        Console.Write($"Downloading: {CalculateProgressPercentage(downloadedBytes, totalBytes)}%" + " " + downloadedBytes / 128000 + "/" + totalBytes / 128000 + " Blocks");
+                        Console.Write($"Downloading: {CalculateProgressPercentage(downloadedBytes, totalBytes)}%");
 
                         DrawProgressBar(downloadedBytes, totalBytes);
                     }
@@ -109,22 +180,22 @@ class Program
 
     static void DrawProgressBar(long completed, long total)
     {
-    const int ProgressBarWidth = 10;
-    const string ProgressBarChars = "░▒▓█";
+        const int ProgressBarWidth = 10;
+        const string ProgressBarChars = "░▒▓█";
 
-    double progress = (double)completed*2 / total;
-    int completedWidth = (int)(progress * ProgressBarWidth);
+        double progress = (double)completed * 2 / total;
+        int completedWidth = (int)(progress * ProgressBarWidth);
 
-    int numFullChars = completedWidth / (ProgressBarWidth / ProgressBarChars.Length);
-    int numPartialChars = completedWidth % (ProgressBarWidth / ProgressBarChars.Length);
+        int numFullChars = completedWidth / (ProgressBarWidth / ProgressBarChars.Length);
+        int numPartialChars = completedWidth % (ProgressBarWidth / ProgressBarChars.Length);
 
-    string progressBar = new string(ProgressBarChars[ProgressBarChars.Length - 1], numFullChars);
+        string progressBar = new string(ProgressBarChars[ProgressBarChars.Length - 1], numFullChars);
 
-    if (numPartialChars > 0)
-        progressBar += ProgressBarChars[numPartialChars - 1];
+        if (numPartialChars > 0)
+            progressBar += ProgressBarChars[numPartialChars - 1];
 
-    progressBar = progressBar.PadRight(ProgressBarWidth, ProgressBarChars[0]);
+        progressBar = progressBar.PadRight(ProgressBarWidth, ProgressBarChars[0]);
 
-    Console.Write($" {progressBar}");
+        Console.Write($" {progressBar}");
     }
 }
