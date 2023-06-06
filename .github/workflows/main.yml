@@ -33,3 +33,7 @@ jobs:
 
           # Build the application
           dotnet build
+      - name: Release
+        run:
+          gh release create v1.0.${{ github.run_number }} --generate-notes
+          gh release upload v1.0.${{ github.run_number }} D:\a\Simple-Downloader\Simple-Downloader\bin\Simple-Downloader.exe
