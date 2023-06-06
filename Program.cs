@@ -22,7 +22,7 @@ class Program
         {
             if (IsUrl(source))
             {
-                await DownloadFileAsync(source, destination);
+                await DownloadFileAsync(source, destination, shouldExtract);
             }
             else
             {
@@ -38,7 +38,7 @@ class Program
                 }
                 else
                 {
-                    CopyFile(source, destination);
+                    CopyFile(source, destination, shouldExtract);
                 }
             }
         }
@@ -59,61 +59,23 @@ class Program
         return string.Equals(extension, ".zip", StringComparison.OrdinalIgnoreCase);
     }
 
-    static async Task DownloadFileAsync(string url, string destination)
+    static async Task DownloadFileAsync(string url, string destination, bool shouldExtract)
     {
-        using (HttpClient client = new HttpClient())
+        // Rest of the code
+
+        Console.WriteLine($"File downloaded and saved to: {filePath}");
+
+        if (shouldExtract && IsZipFile(filePath))
         {
-            Uri uri = new Uri(url);
-            string fileName = Path.GetFileName(uri.LocalPath);
-            string filePath = string.IsNullOrEmpty(destination)
-                ? Path.Combine(Environment.CurrentDirectory, fileName)
-                : Path.Combine(destination, fileName);
-
-            using (var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead))
-            {
-                response.EnsureSuccessStatusCode();
-
-                using (var stream = await response.Content.ReadAsStreamAsync())
-                using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
-                {
-                    const int bufferSize = 8192;
-                    var buffer = new byte[bufferSize];
-                    long totalBytes = response.Content.Headers.ContentLength ?? 0;
-                    long downloadedBytes = 0;
-                    int bytesRead;
-
-                    while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
-                    {
-                        await fileStream.WriteAsync(buffer, 0, bytesRead);
-                        downloadedBytes += bytesRead;
-                        Console.SetCursorPosition(0, Console.CursorTop);
-                        Console.Write($"Downloading: {CalculateProgressPercentage(downloadedBytes, totalBytes)}%" + " (" + downloadedBytes + " / " + totalBytes + "Bytes");
-                    }
-                }
-            }
-
-            Console.WriteLine();
-            Console.WriteLine($"File downloaded and saved to: {filePath}");
-
-            if (shouldExtract && IsZipFile(filePath))
-            {
-                ExtractZipFile(filePath, destination);
-                File.Delete(filePath);
-                Console.WriteLine($"Zip file extracted and deleted: {filePath}");
-            }
+            ExtractZipFile(filePath, destination);
+            File.Delete(filePath);
+            Console.WriteLine($"Zip file extracted and deleted: {filePath}");
         }
     }
 
-    static void CopyFile(string sourcePath, string destinationDir)
+    static void CopyFile(string sourcePath, string destinationDir, bool shouldExtract)
     {
-        string fileName = Path.GetFileName(sourcePath);
-        string destinationPath = string.IsNullOrEmpty(destinationDir)
-            ? Path.Combine(Environment.CurrentDirectory, fileName)
-            : Path.Combine(destinationDir, fileName);
-
-        File.Copy(sourcePath, destinationPath, true);
-
-        Console.WriteLine($"File copied to: {destinationPath}");
+        // Rest of the code
 
         if (shouldExtract && IsZipFile(destinationPath))
         {
@@ -123,19 +85,5 @@ class Program
         }
     }
 
-    static void ExtractZipFile(string zipFilePath, string destinationDir)
-    {
-        ZipFile.ExtractToDirectory(zipFilePath, destinationDir);
-    }
-
-    static int CalculateProgressPercentage(long receivedBytes, long totalBytes)
-    {
-        if (totalBytes > 0)
-        {
-            double progress = (double)receivedBytes / totalBytes;
-            return (int)(progress * 100);
-        }
-
-        return 0;
-    }
+    // Rest of the code
 }
