@@ -2,7 +2,7 @@ name: Build and Install .NET Framework
 on:
   push:
     branches:
-      - main
+      - PROD
 
 jobs:
   build:
