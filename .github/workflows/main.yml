@@ -10,51 +10,44 @@ on:
 
 jobs:
   build-and-release:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    - name: Install .NET Framework Developer Pack
-      run: |
-        sudo apt-get install -y mono-devel
-        wget -O dotnet-framework-installer.exe https://aka.ms/dotnet-framework-installer
-        chmod +x dotnet-framework-installer.exe
-        sudo ./dotnet-framework-installer.exe --install-dir /usr/share/dotnet --version 4.8.1
+      - name: Setup .NET Framework
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '4.8.1'
 
-    - name: Setup .NET Framework
-      run: |
-        echo 'export PATH="$PATH:/usr/share/dotnet"' >> $HOME/.bashrc
-        source $HOME/.bashrc
+      - name: Restore dependencies
+        run: dotnet restore
 
-    - name: Restore dependencies
-      run: dotnet restore
+      - name: Build application
+        run: dotnet build --configuration Release
 
-    - name: Build application
-      run: dotnet build --configuration Release
+      - name: Run tests
+        run: dotnet test --configuration Release --no-restore
 
-    - name: Run tests
-      run: dotnet test --configuration Release --no-restore
+      - name: Publish artifacts
+        run: dotnet publish --configuration Release --output ./publish
 
-    - name: Publish artifacts
-      run: dotnet publish --configuration Release --output ./publish
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            Release ${{ github.ref }} is created automatically.
+          draft: false
+          prerelease: false
 
-    - name: Create release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        body: |
-          Release ${{ github.ref }} is created automatically.
-        draft: false
-        prerelease: false
-
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: Release Artifacts
-        path: ./publish
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: Release Artifacts
+          path: ./publish
