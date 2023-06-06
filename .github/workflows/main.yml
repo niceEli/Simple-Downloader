@@ -43,5 +43,5 @@ jobs:
           release_name: Release v1.0.${{ github.run_number }}
           draft: false
           prerelease: false
-          files: |
+          body: |
             ./bin/Simple-Downloader.exe
