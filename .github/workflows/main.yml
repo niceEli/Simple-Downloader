@@ -44,4 +44,4 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            ./path/to/your/executable.exe
+            ./bin/Simple-Downloader.exe
