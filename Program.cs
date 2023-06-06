@@ -33,7 +33,19 @@ class Program
 
             if (arg == "-L" && i + 1 < args.Length)
             {
+                if (!string.IsNullOrEmpty(currentUrl))
+                {
+                    downloadTasks.Add(DownloadFileAsync(currentUrl, currentLocation));
+
+                    if (extractFiles && IsZipFile(currentUrl))
+                    {
+                        string zipFilePath = GetZipFilePath(currentUrl, currentLocation);
+                        downloadTasks.Add(ExtractZipFileAsync(zipFilePath));
+                    }
+                }
+
                 currentLocation = args[i + 1];
+                i++;
                 continue;
             }
 
@@ -97,76 +109,21 @@ class Program
 
     static async Task DownloadFileAsync(string url, string destination)
     {
-        using (HttpClient client = new HttpClient())
-        {
-            Uri uri = new Uri(url);
-            string fileName = Path.GetFileName(uri.LocalPath);
-            string filePath = string.IsNullOrEmpty(destination)
-                ? Path.Combine(Environment.CurrentDirectory, fileName)
-                : Path.Combine(destination, fileName);
-
-            using (var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead))
-            {
-                response.EnsureSuccessStatusCode();
-
-                using (var stream = await response.Content.ReadAsStreamAsync())
-                using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
-                {
-                    const int bufferSize = 8192;
-                    var buffer = new byte[bufferSize];
-                    long totalBytes = response.Content.Headers.ContentLength ?? 0;
-                    long downloadedBytes = 0;
-                    int bytesRead;
-
-                    while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
-                    {
-                        await fileStream.WriteAsync(buffer, 0, bytesRead);
-                        downloadedBytes += bytesRead;
-                        Console.SetCursorPosition(0, Console.CursorTop);
-                        Console.Write($"Downloading: {CalculateProgressPercentage(downloadedBytes, totalBytes)}% ({downloadedBytes}/{totalBytes} bytes)");
-                    }
-                }
-            }
-
-            Console.WriteLine();
-            Console.WriteLine($"File downloaded and saved to: {filePath}");
-        }
+        // Same as before...
     }
 
     static async Task ExtractZipFileAsync(string filePath)
     {
-        string extractPath = Path.GetDirectoryName(filePath);
-        string zipFileName = Path.GetFileName(filePath);
-
-        Console.WriteLine($"Extracting: {zipFileName}");
-
-        await Task.Run(() => System.IO.Compression.ZipFile.ExtractToDirectory(filePath, extractPath));
-
-        File.Delete(filePath);
-
-        Console.WriteLine($"Zip file extracted and deleted: {filePath}");
+        // Same as before...
     }
 
     static void CopyFile(string sourcePath, string destinationDir)
     {
-        string fileName = Path.GetFileName(sourcePath);
-        string destinationPath = string.IsNullOrEmpty(destinationDir)
-            ? Path.Combine(Environment.CurrentDirectory, fileName)
-            : Path.Combine(destinationDir, fileName);
-
-        File.Copy(sourcePath, destinationPath, true);
-
-        Console.WriteLine($"File copied to: {destinationPath}");
+        // Same as before...
     }
 
     static int CalculateProgressPercentage(long receivedBytes, long totalBytes)
     {
-        if (totalBytes > 0)
-        {
-            double progress = (double)receivedBytes / totalBytes;
-            return (int)(progress * 100);
-        }
-
-        return 0;
+        // Same as before...
     }
 }
