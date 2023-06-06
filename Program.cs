@@ -72,7 +72,7 @@ class Program
                         await fileStream.WriteAsync(buffer, 0, bytesRead);
                         downloadedBytes += bytesRead;
                         Console.SetCursorPosition(0, Console.CursorTop);
-                        Console.Write($"Downloading: {CalculateProgressPercentage(downloadedBytes, totalBytes)}%");
+                        Console.Write($"Downloading: {CalculateProgressPercentage(downloadedBytes, totalBytes)}%" + " " + downloadedBytes / 128000 + " / " + totalBytes / 128000 + " Blocks");
 
                         DrawProgressBar(downloadedBytes, totalBytes);
                     }
@@ -108,23 +108,22 @@ class Program
     }
 
     static void DrawProgressBar(long completed, long total)
-    {
-        const int ProgressBarWidth = 10;
-        const string ProgressBarChars = "░▒▓█";
+{
+    const int ProgressBarWidth = 10;
+    const string ProgressBarChars = "░▒▓█";
 
-        double progress = (double)completed / total;
-        int completedWidth = (int)(progress * ProgressBarWidth);
+    double progress = (double)completed / total;
+    int completedWidth = (int)(progress * ProgressBarWidth);
 
-        int numFullChars = completedWidth / (ProgressBarWidth / ProgressBarChars.Length);
-        int numPartialChars = completedWidth % (ProgressBarWidth / ProgressBarChars.Length);
+    int numFullChars = completedWidth / (ProgressBarWidth / ProgressBarChars.Length);
+    int numPartialChars = completedWidth % (ProgressBarWidth / ProgressBarChars.Length);
 
-        string progressBar = new string(ProgressBarChars[ProgressBarChars.Length - 1], numFullChars);
+    string progressBar = new string(ProgressBarChars[ProgressBarChars.Length - 1], numFullChars);
 
-        if (numPartialChars > 0)
-            progressBar += ProgressBarChars[numPartialChars - 1];
+    if (numPartialChars > 0)
+        progressBar += ProgressBarChars[numPartialChars - 1];
 
-        progressBar = progressBar.PadRight(ProgressBarWidth, ProgressBarChars[0]);
+    progressBar = progressBar.PadRight(ProgressBarWidth, ProgressBarChars[0]);
 
-        Console.Write($" {progressBar}");
-    }
+    Console.Write($" {progressBar}");
 }
