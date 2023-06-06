@@ -9,7 +9,7 @@ class Program
 {
     static async Task Main(string[] args)
     {
-        if (args.Length < 1 || args.Length % 2 != 0)
+        if (args.Length < 2 || args.Length % 2 != 0)
         {
             Console.WriteLine("Usage: Simple-Downloader <url1> -L <directory1> [<url2> -L <directory2>] [-E|--Extract]");
             return;
@@ -18,11 +18,12 @@ class Program
         List<Task> downloadTasks = new List<Task>();
         bool extractFiles = false;
 
+        string currentUrl = "";
+        string currentLocation = "";
+
         for (int i = 0; i < args.Length; i++)
         {
             string arg = args[i];
-            string url = "";
-            string location = "";
 
             if (arg == "-E" || arg == "--Extract")
             {
@@ -30,59 +31,50 @@ class Program
                 continue;
             }
 
-            if (i + 1 < args.Length)
+            if (arg == "-L")
             {
-                if (args[i + 1] == "-L")
+                if (i + 1 < args.Length)
                 {
-                    if (i + 2 < args.Length)
-                    {
-                        url = arg;
-                        location = args[i + 2];
-                        i += 2;
-                    }
-                    else
-                    {
-                        Console.WriteLine("Invalid command line arguments. The location is missing.");
-                        return;
-                    }
+                    currentLocation = args[i + 1];
+                    i++;
                 }
                 else
                 {
-                    Console.WriteLine("Invalid command line arguments.");
+                    Console.WriteLine("Invalid command line arguments. The location is missing.");
                     return;
                 }
             }
             else
             {
-                url = arg;
-            }
+                currentUrl = arg;
 
-            try
-            {
-                if (IsUrl(url))
+                try
                 {
-                    downloadTasks.Add(DownloadFileAsync(url, location));
-
-                    if (extractFiles && IsZipFile(url))
+                    if (IsUrl(currentUrl))
                     {
-                        string zipFilePath = GetZipFilePath(url, location);
-                        downloadTasks.Add(ExtractZipFileAsync(zipFilePath));
+                        downloadTasks.Add(DownloadFileAsync(currentUrl, currentLocation));
+
+                        if (extractFiles && IsZipFile(currentUrl))
+                        {
+                            string zipFilePath = GetZipFilePath(currentUrl, currentLocation);
+                            downloadTasks.Add(ExtractZipFileAsync(zipFilePath));
+                        }
+                    }
+                    else
+                    {
+                        if (!File.Exists(currentUrl))
+                        {
+                            Console.WriteLine("The source file does not exist.");
+                            return;
+                        }
+
+                        CopyFile(currentUrl, currentLocation);
                     }
                 }
-                else
+                catch (Exception ex)
                 {
-                    if (!File.Exists(url))
-                    {
-                        Console.WriteLine("The source file does not exist.");
-                        return;
-                    }
-
-                    CopyFile(url, location);
+                    Console.WriteLine($"An error occurred: {ex.Message}");
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error occurred: {ex.Message}");
             }
         }
 
