@@ -3,10 +3,10 @@ name: .NET Core Build and Release
 on:
   push:
     branches:
-      - main
+      - PROD
   pull_request:
     branches:
-      - main
+      - PROD
 
 jobs:
   build-and-release:
