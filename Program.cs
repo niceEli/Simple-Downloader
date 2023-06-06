@@ -72,7 +72,7 @@ class Program
                         await fileStream.WriteAsync(buffer, 0, bytesRead);
                         downloadedBytes += bytesRead;
                         Console.SetCursorPosition(0, Console.CursorTop);
-                        Console.Write($"Downloading: {CalculateProgressPercentage(downloadedBytes, totalBytes)}%" + " " + downloadedBytes / 128000 + " / " + totalBytes / 128000 + " Blocks");
+                        Console.Write($"Downloading: {CalculateProgressPercentage(downloadedBytes, totalBytes)}%" + " " + downloadedBytes / 128000 + "/" + totalBytes / 128000 + " Blocks");
 
                         DrawProgressBar(downloadedBytes, totalBytes);
                     }
@@ -112,7 +112,7 @@ class Program
     const int ProgressBarWidth = 10;
     const string ProgressBarChars = "░▒▓█";
 
-    double progress = (double)completed / total;
+    double progress = (double)completed*2 / total;
     int completedWidth = (int)(progress * ProgressBarWidth);
 
     int numFullChars = completedWidth / (ProgressBarWidth / ProgressBarChars.Length);
