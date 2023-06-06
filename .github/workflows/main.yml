@@ -1,4 +1,4 @@
-name: .NET Build and Release
+name: .NET Framework Build and Release
 
 on:
   push:
@@ -18,16 +18,14 @@ jobs:
 
     - name: Install .NET Framework Developer Pack
       run: |
-        wget -O dotnet-sdk-installer.sh https://dot.net/v1/dotnet-install.sh
-        chmod +x dotnet-sdk-installer.sh
-        ./dotnet-sdk-installer.sh --install-dir /usr/share/dotnet --channel 3.1 --runtime dotnet --version 3.1.426
-        export DOTNET_ROOT="/usr/share/dotnet"
-        export PATH="$PATH:/usr/share/dotnet"
+        wget -O dotnet-framework-installer.exe https://aka.ms/dotnet-framework-installer
+        chmod +x dotnet-framework-installer.exe
+        sudo ./dotnet-framework-installer.exe --install-dir /usr/share/dotnet --version 4.8.1
 
-    - name: Setup .NET Core
+    - name: Setup .NET Framework
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '3.1'  # Update to the desired .NET Core version
+        dotnet-version: '4.8.x'  # Update to the desired .NET Framework version
 
     - name: Restore dependencies
       run: dotnet restore
