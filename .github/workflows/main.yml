@@ -1,53 +1,37 @@
-name: .NET Framework Build and Release
-
+name: Build and Install .NET Framework
 on:
   push:
     branches:
-      - PROD
-  pull_request:
-    branches:
-      - PROD
+      - main
 
 jobs:
-  build-and-release:
+  build:
     runs-on: windows-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Setup .NET Framework
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: '4.8.1'
+      - name: Install .NET Framework
+        run: |
+          # Download .NET Framework installer
+          Invoke-WebRequest -Uri https://go.microsoft.com/fwlink/?linkid=2203306 -OutFile dotnet-framework-installer.exe
 
-      - name: Restore dependencies
-        run: dotnet restore
+          # Install .NET Framework
+          Start-Process -Wait -FilePath dotnet-framework-installer.exe -ArgumentList "/q"
+
+          # Optional: Verify installation
+          Get-WindowsFeature -Name NET-Framework-Core
 
       - name: Build application
-        run: dotnet build --configuration Release
+        run: |
+          # Navigate to the project directory
+          cd .
 
-      - name: Run tests
-        run: dotnet test --configuration Release --no-restore
+          # Restore dependencies
+          dotnet restore
 
-      - name: Publish artifacts
-        run: dotnet publish --configuration Release --output ./publish
+          # Build the application
+          dotnet build
 
-      - name: Create release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          body: |
-            Release ${{ github.ref }} is created automatically.
-          draft: false
-          prerelease: false
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: Release Artifacts
-          path: ./publish
+      # Add additional steps for testing, publishing, etc.
