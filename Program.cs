@@ -9,9 +9,9 @@ class Program
 {
     static async Task Main(string[] args)
     {
-        if (args.Length < 2 || args.Length % 2 != 0)
+        if (args.Length < 1)
         {
-            Console.WriteLine("Usage: Simple-Downloader <url1> -L <directory1> [<url2> -L <directory2>] [-E|--Extract]");
+            Console.WriteLine("Usage: Simple-Downloader [<url1> -L <directory1> [<url2> -L <directory2>] ...] [-E|--Extract]");
             return;
         }
 
@@ -31,50 +31,43 @@ class Program
                 continue;
             }
 
-            if (arg == "-L")
+            if (arg == "-L" && i + 1 < args.Length)
             {
-                if (i + 1 < args.Length)
+                currentLocation = args[i + 1];
+                continue;
+            }
+
+            if (IsUrl(arg))
+            {
+                if (!string.IsNullOrEmpty(currentUrl))
                 {
-                    currentLocation = args[i + 1];
-                    i++;
+                    downloadTasks.Add(DownloadFileAsync(currentUrl, currentLocation));
+
+                    if (extractFiles && IsZipFile(currentUrl))
+                    {
+                        string zipFilePath = GetZipFilePath(currentUrl, currentLocation);
+                        downloadTasks.Add(ExtractZipFileAsync(zipFilePath));
+                    }
                 }
-                else
-                {
-                    Console.WriteLine("Invalid command line arguments. The location is missing.");
-                    return;
-                }
+
+                currentUrl = arg;
+                currentLocation = "";
             }
             else
             {
-                currentUrl = arg;
+                Console.WriteLine("Invalid command line arguments. URLs and locations must be specified alternately.");
+                return;
+            }
+        }
 
-                try
-                {
-                    if (IsUrl(currentUrl))
-                    {
-                        downloadTasks.Add(DownloadFileAsync(currentUrl, currentLocation));
+        if (!string.IsNullOrEmpty(currentUrl))
+        {
+            downloadTasks.Add(DownloadFileAsync(currentUrl, currentLocation));
 
-                        if (extractFiles && IsZipFile(currentUrl))
-                        {
-                            string zipFilePath = GetZipFilePath(currentUrl, currentLocation);
-                            downloadTasks.Add(ExtractZipFileAsync(zipFilePath));
-                        }
-                    }
-                    else
-                    {
-                        if (!File.Exists(currentUrl))
-                        {
-                            Console.WriteLine("The source file does not exist.");
-                            return;
-                        }
-
-                        CopyFile(currentUrl, currentLocation);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"An error occurred: {ex.Message}");
-                }
+            if (extractFiles && IsZipFile(currentUrl))
+            {
+                string zipFilePath = GetZipFilePath(currentUrl, currentLocation);
+                downloadTasks.Add(ExtractZipFileAsync(zipFilePath));
             }
         }
 
