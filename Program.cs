@@ -108,7 +108,7 @@ class Program
     }
 
     static void DrawProgressBar(long completed, long total)
-{
+    {
     const int ProgressBarWidth = 10;
     const string ProgressBarChars = "░▒▓█";
 
@@ -126,4 +126,5 @@ class Program
     progressBar = progressBar.PadRight(ProgressBarWidth, ProgressBarChars[0]);
 
     Console.Write($" {progressBar}");
+    }
 }
