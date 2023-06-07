@@ -2,18 +2,19 @@ using System;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Spectre.Console;
 
 class Program
 {
     static async Task Main(string[] args)
     {
-        Console.WriteLine("███████████████████");
-        Console.WriteLine("█Simple Downloader█");
-        Console.WriteLine("█By niceEli       █");
-        Console.WriteLine("█                 █");
-        Console.WriteLine("█V1.0.X           █");
-        Console.WriteLine("███████████████████");
-        Console.WriteLine();
+        AnsiConsole.MarkupLine("[teal]███████████████████[/]");
+		AnsiConsole.MarkupLine("[teal]█Simple Downloader█[/]");
+        AnsiConsole.MarkupLine("[teal]█By niceEli       █[/]");
+        AnsiConsole.MarkupLine("[teal]█                 █[/]");
+        AnsiConsole.MarkupLine("[teal]█V1.0.X           █[/]");
+        AnsiConsole.MarkupLine("[teal]███████████████████[/]");
+        AnsiConsole.WriteLine();
 
         if (args.Length < 1)
         {
@@ -69,7 +70,7 @@ class Program
                 using (var stream = await response.Content.ReadAsStreamAsync())
                 using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
                 {
-                    const int bufferSize = 8192;
+                    const int bufferSize = 819200;
                     var buffer = new byte[bufferSize];
                     long totalBytes = response.Content.Headers.ContentLength ?? 0;
                     long downloadedBytes = 0;
@@ -77,18 +78,27 @@ class Program
 
                     while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
                     {
-                        await fileStream.WriteAsync(buffer, 0, bytesRead);
+						totalBytes = response.Content.Headers.ContentLength ?? 0;
+						await fileStream.WriteAsync(buffer, 0, bytesRead);
                         downloadedBytes += bytesRead;
                         Console.SetCursorPosition(0, Console.CursorTop);
-                        Console.Write($"Downloading: {CalculateProgressPercentage(downloadedBytes, totalBytes)}%" + " " + downloadedBytes / 128000 + "/" + totalBytes / 128000 + " Blocks");
+                        AnsiConsole.Write($"Downloading: {CalculateProgressPercentage(downloadedBytes, totalBytes)}%" + " " + downloadedBytes / 128000 + "/" + totalBytes / 128000 + " Blocks");
 
-                        DrawProgressBar(downloadedBytes, totalBytes);
-                    }
+                        
+                        AnsiConsole.Markup("[green]" + " " + GenerateProgressBar(downloadedBytes, totalBytes) + "[/]");
+					}
                 }
             }
 
-            Console.WriteLine();
-            Console.WriteLine($"File downloaded and saved to: {filePath}");
+            AnsiConsole.WriteLine();
+            AnsiConsole.MarkupLine($"[purple]File downloaded and saved to: [/]");
+            var pathed = new TextPath(filePath);
+			pathed.RootStyle = new Style(foreground: Color.Red);
+			pathed.SeparatorStyle = new Style(foreground: Color.Green);
+			pathed.StemStyle = new Style(foreground: Color.Blue);
+			pathed.LeafStyle = new Style(foreground: Color.Yellow);
+			AnsiConsole.Write(pathed);
+            
         }
     }
 
@@ -115,26 +125,19 @@ class Program
         return 0;
     }
 
-    static void DrawProgressBar(long completed, long total)
-    {
-    const int ProgressBarWidth = 5;
-    const string ProgressBarChars = "░▒▓█";
+	static string GenerateProgressBar (float current, float max)
+	{
+		const int ProgressBarWidth = 10; // Adjust this value to change the width of the progress bar
+		float progress = current / max;
+		if (progress < 0)
+			progress = 0;
+		else if (progress > 1)
+			progress = 1;
 
-    double progress = (double)completed / total;
-	int completedWidth = (int)(progress * ProgressBarWidth);
-	completedWidth = Math.Min(completedWidth, ProgressBarWidth);
+		int filledWidth = (int)(progress * ProgressBarWidth);
+		int emptyWidth = ProgressBarWidth - filledWidth;
 
-
-	int numFullChars = completedWidth / (ProgressBarWidth / ProgressBarChars.Length);
-    int numPartialChars = completedWidth % (ProgressBarWidth / ProgressBarChars.Length);
-
-    string progressBar = new string(ProgressBarChars[ProgressBarChars.Length - 1], numFullChars);
-
-    if (numPartialChars > 0)
-        progressBar += ProgressBarChars[numPartialChars - 1];
-
-    progressBar = progressBar.PadRight(ProgressBarWidth, ProgressBarChars[0]);
-
-    Console.Write($" {progressBar}");
-    }
+		string progressBar = new string('█', filledWidth) + new string('░', emptyWidth);
+		return progressBar;
+	}
 }
