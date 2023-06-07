@@ -121,9 +121,11 @@ class Program
     const string ProgressBarChars = "░▒▓█";
 
     double progress = (double)completed*2 / total;
-    int completedWidth = (int)(progress * ProgressBarWidth);
+	int completedWidth = (int)(progress * ProgressBarWidth);
+	completedWidth = Math.Min(completedWidth, ProgressBarWidth);
 
-    int numFullChars = completedWidth / (ProgressBarWidth / ProgressBarChars.Length);
+
+		int numFullChars = completedWidth / (ProgressBarWidth / ProgressBarChars.Length);
     int numPartialChars = completedWidth % (ProgressBarWidth / ProgressBarChars.Length);
 
     string progressBar = new string(ProgressBarChars[ProgressBarChars.Length - 1], numFullChars);
