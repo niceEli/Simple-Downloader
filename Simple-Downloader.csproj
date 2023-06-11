@@ -59,6 +59,7 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.IO.Compression" />
     <Reference Include="System.IO.Compression.Filesystem" />
+    <Reference Include="Spectre.Console" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
