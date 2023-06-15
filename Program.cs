@@ -2,128 +2,124 @@ using System;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Spectre.Console;
 
 class Program
 {
-    static async Task Main(string[] args)
-    {
-        AnsiConsole.MarkupLine("[teal]███████████████████[/]");
-		AnsiConsole.MarkupLine("[teal]█Simple Downloader█[/]");
-        AnsiConsole.MarkupLine("[teal]█By niceEli       █[/]");
-        AnsiConsole.MarkupLine("[teal]█                 █[/]");
-        AnsiConsole.MarkupLine("[teal]█V1.0.X           █[/]");
-        AnsiConsole.MarkupLine("[teal]███████████████████[/]");
-        AnsiConsole.WriteLine();
+	static async Task Main (string[] args)
+	{
+		Console.ForegroundColor = ConsoleColor.DarkCyan;
 
-        if (args.Length < 1)
-        {
-            Console.WriteLine("Usage: Simple-Downloader <url> [<directory>]");
-            return;
-        }
+		Console.WriteLine("█████████████████████");
+		Console.WriteLine("█ Simple Downloader █");
+		Console.WriteLine("█    By niceEli     █");
+		Console.WriteLine("█                   █");
+		Console.WriteLine("█      V1.0.X       █");
+		Console.WriteLine("█████████████████████");
+		Console.WriteLine();
 
-        string source = args[0];
-        string destination = args.Length > 1 ? args[1] : "";
+		if (args.Length < 1)
+		{
+			Console.WriteLine("Usage: Simple-Downloader <url> [<directory>]");
+			return;
+		}
 
-        try
-        {
-            if (IsUrl(source))
-            {
-                await DownloadFileAsync(source, destination);
-            }
-            else
-            {
-                if (!File.Exists(source))
-                {
-                    Console.WriteLine("The source file does not exist.");
-                    return;
-                }
+		string source = args[0];
+		string destination = args.Length > 1 ? args[1] : "";
 
-                CopyFile(source, destination);
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"An error occurred: {ex.Message}");
-        }
-    }
+		try
+		{
+			if (IsUrl(source))
+			{
+				await DownloadFileAsync(source, destination);
+			}
+			else
+			{
+				if (!File.Exists(source))
+				{
+					Console.WriteLine("The source file does not exist.");
+					return;
+				}
 
-    static bool IsUrl(string path)
-    {
-        return Uri.TryCreate(path, UriKind.Absolute, out _);
-    }
+				CopyFile(source, destination);
+			}
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"An error occurred: {ex.Message}");
+		}
+	}
 
-    static async Task DownloadFileAsync(string url, string destination)
-    {
-        using (HttpClient client = new HttpClient())
-        {
-            Uri uri = new Uri(url);
-            string fileName = Path.GetFileName(uri.LocalPath);
-            string filePath = string.IsNullOrEmpty(destination)
-                ? Path.Combine(Environment.CurrentDirectory, fileName)
-                : Path.Combine(destination, fileName);
+	static bool IsUrl (string path)
+	{
+		return Uri.TryCreate(path, UriKind.Absolute, out _);
+	}
 
-            using (var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead))
-            {
-                response.EnsureSuccessStatusCode();
+	static async Task DownloadFileAsync (string url, string destination)
+	{
+		using (HttpClient client = new HttpClient())
+		{
+			Uri uri = new Uri(url);
+			string fileName = Path.GetFileName(uri.LocalPath);
+			string filePath = string.IsNullOrEmpty(destination)
+				? Path.Combine(Environment.CurrentDirectory, fileName)
+				: Path.Combine(destination, fileName);
 
-                using (var stream = await response.Content.ReadAsStreamAsync())
-                using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
-                {
-                    const int bufferSize = 819200;
-                    var buffer = new byte[bufferSize];
-                    long totalBytes = response.Content.Headers.ContentLength ?? 0;
-                    long downloadedBytes = 0;
-                    int bytesRead;
+			using (var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead))
+			{
+				response.EnsureSuccessStatusCode();
 
-                    while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
-                    {
-						totalBytes = response.Content.Headers.ContentLength ?? 0;
+				using (var stream = await response.Content.ReadAsStreamAsync())
+				using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+				{
+					const int bufferSize = 819200;
+					var buffer = new byte[bufferSize];
+					long totalBytes = response.Content.Headers.ContentLength ?? 0;
+					long downloadedBytes = 0;
+					int bytesRead;
+
+					while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+					{
 						await fileStream.WriteAsync(buffer, 0, bytesRead);
-                        downloadedBytes += bytesRead;
-                        Console.SetCursorPosition(0, Console.CursorTop);
-                        AnsiConsole.Write($"Downloading: {CalculateProgressPercentage(downloadedBytes, totalBytes)}%" + " " + downloadedBytes / 128000 + "/" + totalBytes / 128000 + " Blocks");
+						downloadedBytes += bytesRead;
 
-                        
-                        AnsiConsole.Markup("[green]" + " " + GenerateProgressBar(downloadedBytes, totalBytes) + "[/]");
+						Console.SetCursorPosition(0, Console.CursorTop);
+						Console.Write($"Downloading: {CalculateProgressPercentage(downloadedBytes, totalBytes)}%" + " " + downloadedBytes / 128000 + "/" + totalBytes / 128000 + " Blocks");
+						Console.ForegroundColor = ConsoleColor.Green;
+						Console.Write(" " + GenerateProgressBar(downloadedBytes, totalBytes));
 					}
-                }
-            }
+				}
+			}
 
-            AnsiConsole.WriteLine();
-            AnsiConsole.MarkupLine($"[purple]File downloaded and saved to: [/]");
-            var pathed = new TextPath(filePath);
-			pathed.RootStyle = new Style(foreground: Color.Red);
-			pathed.SeparatorStyle = new Style(foreground: Color.Green);
-			pathed.StemStyle = new Style(foreground: Color.Blue);
-			pathed.LeafStyle = new Style(foreground: Color.Yellow);
-			AnsiConsole.Write(pathed);
-            
-        }
-    }
+			Console.WriteLine();
+			Console.ForegroundColor = ConsoleColor.Magenta;
+			Console.Write("File downloaded and saved to: ");
+			Console.ForegroundColor = ConsoleColor.Yellow;
+			Console.Write(filePath);
+		}
+	}
 
-    static void CopyFile(string sourcePath, string destinationDir)
-    {
-        string fileName = Path.GetFileName(sourcePath);
-        string destinationPath = string.IsNullOrEmpty(destinationDir)
-            ? Path.Combine(Environment.CurrentDirectory, fileName)
-            : Path.Combine(destinationDir, fileName);
+	static void CopyFile (string sourcePath, string destinationDir)
+	{
+		string fileName = Path.GetFileName(sourcePath);
+		string destinationPath = string.IsNullOrEmpty(destinationDir)
+			? Path.Combine(Environment.CurrentDirectory, fileName)
+			: Path.Combine(destinationDir, fileName);
 
-        File.Copy(sourcePath, destinationPath, true);
+		File.Copy(sourcePath, destinationPath, true);
 
-        Console.WriteLine($"File copied to: {destinationPath}");
-    }
+		Console.WriteLine($"File copied to: {destinationPath}");
+	}
 
-    static int CalculateProgressPercentage(long receivedBytes, long totalBytes)
-    {
-        if (totalBytes > 0)
-        {
-            double progress = (double)receivedBytes / totalBytes;
-            return (int)(progress * 100);
-        }
+	static int CalculateProgressPercentage (long receivedBytes, long totalBytes)
+	{
+		if (totalBytes > 0)
+		{
+			double progress = (double)receivedBytes / totalBytes;
+			return (int)(progress * 100);
+		}
 
-        return 0;
-    }
+		return 0;
+	}
 
 	static string GenerateProgressBar (float current, float max)
 	{
